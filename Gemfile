@@ -6,8 +6,10 @@ gem 'rails', '3.2.13'
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
 
 gem 'pg'
-gem 'sqlite3'
 gem 'devise'
+gem 'sqlite3'
+gem 'omniauth-oauth2'
+gem 'multi_json'
 
 
 # Gems used only for assets and not required
