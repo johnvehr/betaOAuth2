@@ -9,16 +9,24 @@ module OmniAuth
 
       option :client_options, {
         :site => "http://dev-onelessleg.gotpantheon.com",
+        :authorize_url => "/oauth2/authorize",
         :token_url => "/oauth2/token"
       }
-
+      attr_accessor :access_token
 
       uid { raw_info['uid'] }
 
-      info do {
+      info do
+        prune!({
         :email => raw_info['mail'],
         :username => raw_info['name']
-      }
+      })
+      end
+
+      extra do
+        hash = {}
+        hash['raw_info'] = raw_info unless skip_info?
+        prune! hash
       end
 
       #thinking one of these
@@ -34,26 +42,27 @@ module OmniAuth
       #end
 
       def request_phase
-        #'/user/sign_in'
-        '/sign_in'
+        '/users/sign_in'
       end
 
-      #def callback_phase
-        #return fail!(:invalid_credentials) unless user.try(:authenticate, password)
-        #hash = auth_hash
-        #hash[:provider] = "campus"
-        #self.env['omniauth.auth'] = hash
-        #call_app!
-        #access_token = client.password.get_token(username, password)
-        #raw_info(access_token)
-      #end
+      def callback_phase
+        @access_token = client.password.get_token(username, password)
+        raw_info
+        hash = auth_hash
+        hash[:provider] = "campus"
+        self.env['omniauth.auth'] = hash
+        call_app!
+      end
 
       def raw_info
-        access_token = client.password.get_token(username, password)
-        @raw_info = MultiJson.decode(access_token.post("https://dev-onelessleg.gotpantheon.com/oauth2/user/profile").body)
+        @raw_info = MultiJson.decode(@access_token.post("https://dev-onelessleg.gotpantheon.com/oauth2/user/profile").body)
       end
 
       protected
+      def raw_info
+        @raw_info = MultiJson.decode(@access_token.post("https://dev-onelessleg.gotpantheon.com/oauth2/user/profile").body)
+      end
+
       def username
         request.params['user']['username']
         #request.env['omniauth.params']['user']['username']
